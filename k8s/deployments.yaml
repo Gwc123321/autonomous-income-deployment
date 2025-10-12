@@ -1,0 +1,205 @@
+# Trading Bot Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trading-bot
+  namespace: autonomous-income
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: trading-bot
+  template:
+    metadata:
+      labels:
+        app: trading-bot
+    spec:
+      containers:
+      - name: trading-bot
+        image: autonomous-income/trading-bot:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: redis-url
+        - name: BINANCE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: trading-secrets
+              key: binance-api-key
+        - name: COINBASE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: trading-secrets
+              key: coinbase-api-key
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+# Dropshipping Automation Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dropshipping-automation
+  namespace: autonomous-income
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dropshipping-automation
+  template:
+    metadata:
+      labels:
+        app: dropshipping-automation
+    spec:
+      containers:
+      - name: dropshipping-automation
+        image: autonomous-income/dropshipping-automation:latest
+        ports:
+        - containerPort: 8081
+        env:
+        - name: SHOPIFY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ecommerce-secrets
+              key: shopify-api-key
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: payment-secrets
+              key: stripe-secret-key
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+
+---
+# Content Generation Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: content-generator
+  namespace: autonomous-income
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: content-generator
+  template:
+    metadata:
+      labels:
+        app: content-generator
+    spec:
+      containers:
+      - name: content-generator
+        image: autonomous-income/content-generator:latest
+        ports:
+        - containerPort: 8082
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-secrets
+              key: openai-api-key
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-secrets
+              key: anthropic-api-key
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+---
+# Revenue Dashboard Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: revenue-dashboard
+  namespace: autonomous-income
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: revenue-dashboard
+  template:
+    metadata:
+      labels:
+        app: revenue-dashboard
+    spec:
+      containers:
+      - name: revenue-dashboard
+        image: autonomous-income/revenue-dashboard:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+
+---
+# Load Balancer Services
+apiVersion: v1
+kind: Service
+metadata:
+  name: trading-bot-service
+  namespace: autonomous-income
+spec:
+  selector:
+    app: trading-bot
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: LoadBalancer
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: revenue-dashboard-service
+  namespace: autonomous-income
+spec:
+  selector:
+    app: revenue-dashboard
+  ports:
+  - port: 80
+    targetPort: 3000
+  type: LoadBalancer
