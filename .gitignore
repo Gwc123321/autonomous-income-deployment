@@ -1,9 +1,31 @@
-build/
-dist/
-*.log
-__pycache__/
-*.py[cod]
-venv/
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+tfplan
+*.tfplan
+
+# Credentials
+*.pem
+*.key
 .env
 .env.local
-node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Data
+data/
+backups/
